@@ -3,8 +3,23 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAnalyticsOverview, getCampaignsPerformance } from '@/lib/api';
-import { Users, TrendingUp, Megaphone, Send, ArrowRight } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Users, TrendingUp, Megaphone, Send, ArrowRight, Zap, Activity, ShieldAlert } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
+  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts';
+import { motion } from 'framer-motion';
+
+const COLORS = ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5, ease: 'easeOut' } })
+};
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } }
+};
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -30,10 +45,14 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+    return (
+      <div className="flex h-full items-center justify-center flex-col gap-4">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground text-sm animate-pulse">Loading intelligence…</p>
+      </div>
+    );
   }
 
-  // Fallback if API fails
   const data = stats || {
     total_customers: 500,
     total_revenue: 1250000,
@@ -43,129 +62,239 @@ export default function Dashboard() {
 
   const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
+  // AI Insight cards
+  const insights = [
+    { icon: <ShieldAlert size={16} />, color: 'rose', text: '43 customers are at high churn risk this week. Launch a win-back campaign.' },
+    { icon: <Zap size={16} />, color: 'amber', text: 'Best send time for your audience: Tuesday 10 AM – 12 PM IST.' },
+    { icon: <Activity size={16} />, color: 'emerald', text: 'Mumbai segment has 28% higher open rate than average. Consider a city-specific blast.' },
+  ];
+
+  // Revenue trend sparkline (mock data for demo)
+  const revenueTrend = [
+    { day: 'Mon', revenue: 32000 }, { day: 'Tue', revenue: 58000 }, { day: 'Wed', revenue: 47000 },
+    { day: 'Thu', revenue: 76000 }, { day: 'Fri', revenue: 91000 }, { day: 'Sat', revenue: 62000 }, { day: 'Sun', revenue: 84000 }
+  ];
+
+  // Channel distribution pie
+  const channelData = [
+    { name: 'Email', value: 45 }, { name: 'WhatsApp', value: 30 },
+    { name: 'SMS', value: 15 }, { name: 'RCS', value: 10 }
+  ];
+
+  const kpis = [
+    {
+      label: 'Total Customers', value: data.total_customers.toLocaleString(),
+      sub: '+12% from last month', icon: <Users size={20} />, color: 'primary',
+      glowColor: 'primary'
+    },
+    {
+      label: 'Total Revenue', value: formatter.format(data.total_revenue),
+      sub: 'Across all orders', icon: <TrendingUp size={20} />, color: 'emerald',
+      glowColor: 'emerald'
+    },
+    {
+      label: 'Campaigns Sent', value: data.total_campaigns,
+      sub: 'Active + Completed', icon: <Megaphone size={20} />, color: 'blue',
+      glowColor: 'blue'
+    },
+    {
+      label: 'Avg Delivery Rate', value: `${data.avg_delivery_rate?.toFixed(1)}%`,
+      sub: 'Channel average', icon: <Send size={20} />, color: 'amber',
+      glowColor: 'amber'
+    }
+  ];
+
+  const colorMap: Record<string, string> = {
+    primary: 'bg-primary/10 text-primary border-primary/20',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  };
+
+  const glowMap: Record<string, string> = {
+    primary: 'bg-primary/10', emerald: 'bg-emerald-500/10',
+    blue: 'bg-blue-500/10', amber: 'bg-amber-500/10',
+  };
+
   return (
     <div className="space-y-8 animate-fade-in pb-12">
-      <header>
-        <h1 className="text-3xl font-bold mb-2">Good morning, Marketer 👋</h1>
-        <p className="text-muted-foreground">Here is the pulse of Lumière today.</p>
-      </header>
+      {/* Header */}
+      <motion.header initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <h1 className="text-3xl font-bold mb-1">Good morning, Marketer 👋</h1>
+        <p className="text-muted-foreground">Here is the pulse of <span className="text-primary font-semibold">Lumière</span> today.</p>
+      </motion.header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <div className="glass p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-primary/20"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-              <h3 className="text-3xl font-bold mt-1">{data.total_customers.toLocaleString()}</h3>
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
+        variants={stagger}
+        initial="hidden"
+        animate="visible"
+      >
+        {kpis.map((kpi, i) => (
+          <motion.div key={i} custom={i} variants={fadeInUp} className="glass p-6 rounded-2xl relative overflow-hidden group cursor-default">
+            <div className={`absolute top-0 right-0 w-36 h-36 ${glowMap[kpi.glowColor]} rounded-full blur-3xl -mr-12 -mt-12 transition-all group-hover:scale-125`} />
+            <div className="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
+                <h3 className="text-3xl font-bold mt-1 tracking-tight">{kpi.value}</h3>
+              </div>
+              <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${colorMap[kpi.glowColor]}`}>
+                {kpi.icon}
+              </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#1e1e2e] flex items-center justify-center text-primary">
-              <Users size={20} />
+            <div className="flex items-center text-sm text-emerald-400 relative z-10 gap-1">
+              <TrendingUp size={14} />
+              <span>{kpi.sub}</span>
             </div>
-          </div>
-          <div className="flex items-center text-sm text-emerald-400 relative z-10">
-            <TrendingUp size={16} className="mr-1" />
-            <span>+12% from last month</span>
-          </div>
-        </div>
+          </motion.div>
+        ))}
+      </motion.div>
 
-        <div className="glass p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-emerald-500/20"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-              <h3 className="text-3xl font-bold mt-1">{formatter.format(data.total_revenue)}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#1e1e2e] flex items-center justify-center text-emerald-400">
-              <TrendingUp size={20} />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-500/20"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Campaigns Sent</p>
-              <h3 className="text-3xl font-bold mt-1">{data.total_campaigns}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#1e1e2e] flex items-center justify-center text-blue-400">
-              <Megaphone size={20} />
-            </div>
-          </div>
-        </div>
-
-        <div className="glass p-6 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-amber-500/20"></div>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Avg Delivery Rate</p>
-              <h3 className="text-3xl font-bold mt-1">{data.avg_delivery_rate.toFixed(1)}%</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-[#1e1e2e] flex items-center justify-center text-amber-400">
-              <Send size={20} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
+      {/* Charts Row */}
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35, duration: 0.5 }}
+      >
+        {/* Campaign Performance Bar Chart */}
         <div className="lg:col-span-2 glass rounded-2xl p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold">Recent Campaign Performance</h3>
-          </div>
-          <div className="h-[300px] w-full">
+          <h3 className="text-lg font-semibold mb-6">Recent Campaign Performance</h3>
+          <div className="h-[280px]">
             {campaigns.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={campaigns} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3c" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}%`} />
-                  <RechartsTooltip 
-                    cursor={{fill: '#1e1e2e', opacity: 0.4}}
-                    contentStyle={{ backgroundColor: '#111118', border: '1px solid #2a2a3c', borderRadius: '8px' }}
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
+                  <RechartsTooltip
+                    cursor={{ fill: '#1e1e2e', opacity: 0.5 }}
+                    contentStyle={{ backgroundColor: '#111118', border: '1px solid #2a2a3c', borderRadius: '10px', fontSize: '12px' }}
                   />
-                  <Bar dataKey="delivery_rate" name="Delivered" fill="#7c3aed" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Bar dataKey="open_rate" name="Opened" fill="#06b6d4" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Bar dataKey="delivery_rate" name="Delivered %" fill="#7c3aed" radius={[6, 6, 0, 0]} barSize={18} />
+                  <Bar dataKey="open_rate" name="Opened %" fill="#06b6d4" radius={[6, 6, 0, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-muted-foreground">No campaign data yet</div>
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-3">
+                <Megaphone size={40} className="opacity-20" />
+                <p className="text-sm">Launch a campaign to see analytics here.</p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Channel Distribution Pie */}
         <div className="glass rounded-2xl p-6 flex flex-col">
-          <h3 className="text-lg font-semibold mb-6">Quick Actions</h3>
-          <div className="space-y-4 flex-1">
-            <Link href="/chat" className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/20 hover:border-primary/50 transition-colors group">
-              <div>
-                <h4 className="font-semibold text-primary group-hover:text-primary-foreground transition-colors">Start AI Campaign</h4>
-                <p className="text-xs text-muted-foreground mt-1">Let Xena orchestrate a campaign</p>
+          <h3 className="text-lg font-semibold mb-4">Channel Mix</h3>
+          <div className="flex-1 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie data={channelData} cx="50%" cy="50%" innerRadius={50} outerRadius={75}
+                  dataKey="value" paddingAngle={3} stroke="none">
+                  {channelData.map((_, idx) => <Cell key={idx} fill={COLORS[idx % COLORS.length]} />)}
+                </Pie>
+                <RechartsTooltip
+                  contentStyle={{ backgroundColor: '#111118', border: '1px solid #2a2a3c', borderRadius: '10px', fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {channelData.map((c, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i] }} />
+                {c.name} ({c.value}%)
               </div>
-              <ArrowRight className="text-primary group-hover:translate-x-1 transition-transform" />
-            </Link>
-            
-            <Link href="/segments" className="flex items-center justify-between p-4 rounded-xl bg-[#1e1e2e]/50 border border-[#1e1e2e] hover:bg-[#1e1e2e] transition-colors group">
-              <div>
-                <h4 className="font-semibold group-hover:text-white transition-colors">Build a Segment</h4>
-                <p className="text-xs text-muted-foreground mt-1">Filter customers by rules</p>
-              </div>
-              <ArrowRight className="text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <Link href="/customers" className="flex items-center justify-between p-4 rounded-xl bg-[#1e1e2e]/50 border border-[#1e1e2e] hover:bg-[#1e1e2e] transition-colors group">
-              <div>
-                <h4 className="font-semibold group-hover:text-white transition-colors">Browse Customers</h4>
-                <p className="text-xs text-muted-foreground mt-1">View the CRM database</p>
-              </div>
-              <ArrowRight className="text-muted-foreground group-hover:translate-x-1 transition-transform" />
-            </Link>
+            ))}
           </div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Revenue Trend + AI Insights */}
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        {/* Revenue Trend */}
+        <div className="lg:col-span-2 glass rounded-2xl p-6">
+          <h3 className="text-lg font-semibold mb-6">Revenue This Week</h3>
+          <div className="h-[200px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueTrend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3c" vertical={false} />
+                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
+                <RechartsTooltip
+                  contentStyle={{ backgroundColor: '#111118', border: '1px solid #2a2a3c', borderRadius: '10px', fontSize: '12px' }}
+                  formatter={(v: any) => [`₹${v.toLocaleString()}`, 'Revenue']}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#7c3aed" strokeWidth={2.5} fill="url(#revenueGrad)" dot={{ fill: '#7c3aed', r: 4 }} activeDot={{ r: 6 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* AI Insights */}
+        <div className="glass rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={18} className="text-primary" />
+            <h3 className="text-lg font-semibold">Xena's Insights</h3>
+          </div>
+          {insights.map((ins, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 + i * 0.15, duration: 0.4 }}
+              className={`p-4 rounded-xl border text-sm leading-relaxed ${ins.color === 'rose' ? 'bg-rose-500/5 border-rose-500/20 text-rose-300' : ins.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20 text-amber-300' : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300'}`}
+            >
+              <div className="flex gap-2 items-start">
+                <span className="mt-0.5 flex-shrink-0">{ins.icon}</span>
+                <span>{ins.text}</span>
+              </div>
+            </motion.div>
+          ))}
+
+          <Link href="/chat" className="mt-auto flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-violet-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-primary/20">
+            <Zap size={16} /> Ask Xena Anything
+          </Link>
+        </div>
+      </motion.div>
+
+      {/* Quick Actions */}
+      <motion.div
+        className="glass rounded-2xl p-6"
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.65, duration: 0.5 }}
+      >
+        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { href: '/chat', label: 'Start AI Campaign', sub: 'Let Xena orchestrate a campaign end-to-end', color: 'from-primary/20 to-primary/5 border-primary/30 hover:border-primary/60' },
+            { href: '/segments', label: 'Build a Segment', sub: 'Filter customers by rules or natural language', color: 'from-cyan-500/10 to-cyan-500/5 border-cyan-500/20 hover:border-cyan-500/50' },
+            { href: '/customers', label: 'Browse Customers', sub: 'Explore churn risk and LTV predictions', color: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/50' },
+          ].map((a, i) => (
+            <Link key={i} href={a.href} className={`flex items-center justify-between p-5 rounded-xl bg-gradient-to-r ${a.color} border transition-all group`}>
+              <div>
+                <h4 className="font-semibold text-foreground">{a.label}</h4>
+                <p className="text-xs text-muted-foreground mt-1">{a.sub}</p>
+              </div>
+              <ArrowRight size={18} className="text-muted-foreground group-hover:translate-x-1 group-hover:text-white transition-all" />
+            </Link>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 }

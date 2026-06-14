@@ -1,6 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb, saveDb } = require('../db');
+const { calculateChurnRisk, getNextBestAction } = require('../services/mlPredictor');
 
 const router = express.Router();
 
@@ -43,7 +44,13 @@ router.get('/', (req, res) => {
     const stats = db.customer_stats.find(s => s.customer_id === c.id) || {};
     let tags = [];
     try { tags = JSON.parse(c.tags || '[]'); } catch(e){}
-    return { ...c, ...stats, tags };
+    
+    // Calculate Churn Risk
+    const orders = db.orders.filter(o => o.customer_id === c.id);
+    const churnRisk = calculateChurnRisk(c, orders);
+    const nextBestAction = getNextBestAction(churnRisk, stats.total_spend || 0);
+
+    return { ...c, ...stats, tags, churn_risk: churnRisk, next_best_action: nextBestAction };
   });
 
   res.json({ customers: paginated, total, page, limit, totalPages: Math.ceil(total/limit) });
@@ -59,7 +66,11 @@ router.get('/:id', (req, res) => {
   try { tags = JSON.parse(c.tags || '[]'); } catch(e){}
   
   const orders = db.orders.filter(o => o.customer_id === c.id).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-  res.json({ customer: { ...c, ...stats, tags }, orders });
+  
+  const churnRisk = calculateChurnRisk(c, orders);
+  const nextBestAction = getNextBestAction(churnRisk, stats.total_spend || 0);
+
+  res.json({ customer: { ...c, ...stats, tags, churn_risk: churnRisk, next_best_action: nextBestAction }, orders });
 });
 
 module.exports = router;

@@ -69,6 +69,7 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 font-semibold">Location</th>
                 <th className="px-6 py-4 font-semibold">Orders</th>
                 <th className="px-6 py-4 font-semibold">Total Spend</th>
+                <th className="px-6 py-4 font-semibold">Churn Risk</th>
                 <th className="px-6 py-4 font-semibold">Tags</th>
               </tr>
             </thead>
@@ -101,6 +102,20 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 font-medium">{c.total_orders || 0}</td>
                     <td className="px-6 py-4 font-medium text-emerald-400">
                       ₹{c.total_spend?.toLocaleString() || 0}
+                    </td>
+                    <td className="px-6 py-4">
+                      {c.churn_risk ? (
+                        <span className={clsx(
+                          "px-2.5 py-1 rounded-full text-xs font-bold tracking-wide",
+                          c.churn_risk > 75 ? "bg-rose-500/10 text-rose-500" :
+                          c.churn_risk > 40 ? "bg-amber-500/10 text-amber-500" :
+                          "bg-emerald-500/10 text-emerald-500"
+                        )}>
+                          {c.churn_risk > 75 ? 'High' : c.churn_risk > 40 ? 'Medium' : 'Low'} ({c.churn_risk})
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">N/A</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1">
