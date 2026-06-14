@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: channel-service
+    env: node
+    buildCommand: cd channel-service && npm install
+    startCommand: cd channel-service && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+
+  - type: web
+    name: crm-backend
+    env: node
+    buildCommand: cd crm-backend && npm install && npm run seed
+    startCommand: cd crm-backend && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.x
+      - key: CHANNEL_SERVICE_URL
+        value: "https://channel-service-xxxx.onrender.com" # Update with actual URL after deploying channel-service
+      - key: GEMINI_API_KEY
+        value: "" # Optional
