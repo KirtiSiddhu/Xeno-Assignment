@@ -136,7 +136,7 @@ export default function CustomersPage() {
         {!loading && total > 50 && (
           <div className="p-4 border-t border-[#1e1e2e] flex justify-between items-center bg-[#111118]">
             <div className="text-sm text-muted-foreground">
-              Showing {(page - 1) * 50 + 1} to Math.min(page * 50, total)} of {total}
+              Showing {(page - 1) * 50 + 1} to {Math.min(page * 50, total)} of {total}
             </div>
             <div className="flex gap-2">
               <button 
