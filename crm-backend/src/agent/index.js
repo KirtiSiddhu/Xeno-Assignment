@@ -65,9 +65,9 @@ async function chat(messages) {
     
     let allToolCalls = [];
 
-    // Simple loop to handle up to 3 sequential tool calls
+    // Loop to handle up to 8 sequential tool calls (full agentic flows can require 5+)
     let iterations = 0;
-    while (call && iterations < 3) {
+    while (call && iterations < 8) {
       iterations++;
       const functionName = call.name;
       const args = call.args;
